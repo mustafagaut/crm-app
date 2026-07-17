@@ -1,20 +1,39 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import api from '../services/api';
 
-const SignupPage = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState(null);
+// 1. Define strict type contracts for the component state layers
+interface SignupForm {
+  name: string;
+  email: string;
+  password: string;
+}
 
-  // Requirement Check: Proper input validation checking before API lifecycle hooks execution
-  const validate = () => {
-    const nextErrors = {};
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+interface SignupResponse {
+  data?: {
+    token: string;
+  };
+}
+
+const SignupPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [form, setForm] = useState<SignupForm>({ name: '', email: '', password: '' });
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const validate = (): boolean => {
+    const nextErrors: FormErrors = {};
     
     if (!form.name.trim()) {
       nextErrors.name = 'Full name is required';
@@ -42,22 +61,23 @@ const SignupPage = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setAuthError(null);
     if (!validate()) return;
 
     setIsLoading(true);
     try {
-      // Requirement Check: Process secure account creation endpoint registration
-      const response = await api.post('/auth/signup', form);
-      
-      // Requirement Check: Handle security payload parsing via browser storage APIs
-      localStorage.setItem('token', response.data?.data?.token);
-      
-      // Requirement Check: Forward users immediately to the central Contacts Pipeline View
-      navigate('/contacts');
-    } catch (err) {
+      const response = await api.post<SignupResponse>('/auth/signup', form);
+      const token = response.data?.data?.token;
+
+      if (token) {
+        localStorage.setItem('token', token);
+        navigate('/contacts');
+      } else {
+        throw new Error('No authentication token received.');
+      }
+    } catch (err: any) {
       const message = err.response?.data?.message || 'Registration failed. Please check your credentials.';
       setAuthError(message);
     } finally {
@@ -100,7 +120,7 @@ const SignupPage = () => {
                   id="name"
                   type="text"
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })}
                   placeholder="John Doe"
                   className={`block w-full pl-10 pr-3 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.name ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'
@@ -125,7 +145,7 @@ const SignupPage = () => {
                   id="email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })}
                   placeholder="name@company.com"
                   className={`block w-full pl-10 pr-3 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.email ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'
@@ -151,7 +171,7 @@ const SignupPage = () => {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   className={`block w-full pl-10 pr-10 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.password ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'
@@ -184,7 +204,7 @@ const SignupPage = () => {
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className={`block w-full pl-10 pr-3 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.confirmPassword ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'

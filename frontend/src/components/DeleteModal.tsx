@@ -1,6 +1,20 @@
+import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
-const DeleteModal = ({ isOpen, onClose, onConfirm, contactName }) => {
+// Define the interface contract for incoming props
+interface DeleteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  contactName: string | null | undefined;
+}
+
+const DeleteModal: React.FC<DeleteModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  contactName 
+}) => {
   if (!isOpen) return null;
 
   return (

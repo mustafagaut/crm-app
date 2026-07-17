@@ -1,19 +1,35 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import api from '../services/api';
 
-const LoginPage = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState(null);
+// 1. Define explicit structures for component form states
+interface LoginForm {
+  email: string;
+  password: string;
+}
 
-  // Requirement Check: Strict field-level validation before submitting data
-  const validate = () => {
-    const nextErrors = {};
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
+interface LoginResponse {
+  data?: {
+    token: string;
+  };
+}
+
+const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const validate = (): boolean => {
+    const nextErrors: FormErrors = {};
     if (!form.email.trim()) {
       nextErrors.email = 'Email address is required';
     } else if (!/\S+@\S+\.\S+/.test(form.email)) {
@@ -28,22 +44,24 @@ const LoginPage = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setAuthError(null);
     if (!validate()) return;
 
     setIsLoading(true);
     try {
-      // Requirement Check: Handle user authentication against API endpoints
-      const response = await api.post('/auth/login', form);
+      // Typed network payload mapping
+      const response = await api.post<LoginResponse>('/auth/login', form);
+      const token = response.data?.data?.token;
       
-      // Requirement Check: Secure JWT token transmission storage 
-      localStorage.setItem('token', response.data?.data?.token);
-      
-      // Requirement Check: Post-login redirect directly to the main Contacts Dashboard
-      navigate('/contacts');
-    } catch (err) {
+      if (token) {
+        localStorage.setItem('token', token);
+        navigate('/contacts');
+      } else {
+        throw new Error('No authentication token received.');
+      }
+    } catch (err: any) {
       const message = err.response?.data?.message || 'Invalid credentials or connection failure.';
       setAuthError(message);
     } finally {
@@ -65,7 +83,6 @@ const LoginPage = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-slate-900 border border-slate-800 py-8 px-6 shadow-xl rounded-2xl sm:px-10">
           
-          {/* Requirement Check: Clear submission state & system error presentation */}
           {authError && (
             <div className="mb-4 rounded-lg border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-400">
               {authError}
@@ -87,7 +104,7 @@ const LoginPage = () => {
                   id="email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })}
                   placeholder="name@company.com"
                   className={`block w-full pl-10 pr-3 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.email ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'
@@ -113,7 +130,7 @@ const LoginPage = () => {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })}
                   placeholder="••••••••"
                   className={`block w-full pl-10 pr-10 py-2.5 bg-slate-950 border text-slate-100 placeholder-slate-500 rounded-lg text-sm outline-none transition focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 ${
                     errors.password ? 'border-rose-500/50 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-800'
