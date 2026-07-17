@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install frontend deps",
+			"type": "shell",
+			"command": "cd frontend && npm install",
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Install frontend dependencies",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"Set-Location 'c:\\Users\\Asus\\OneDrive\\Desktop\\crm-Application\\frontend'; npm install\"",
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

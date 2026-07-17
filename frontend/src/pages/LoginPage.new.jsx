@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, BarChart3, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, UserRound, Users, Workflow } from 'lucide-react';
+import { ArrowRight, BarChart3, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, Users, Workflow } from 'lucide-react';
 import api from '../services/api';
 
-const SignupPage = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -16,22 +15,15 @@ const SignupPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!form.name || !form.email || !form.password || !confirmPassword) {
-      const message = 'Please complete every field before continuing.';
+    if (!form.email || !form.password) {
+      const message = 'Please enter both your email and password.';
       setError(message);
       setToast({ type: 'error', message });
       return;
     }
 
-    if (form.password.length < 6) {
-      const message = 'Password should be at least 6 characters.';
-      setError(message);
-      setToast({ type: 'error', message });
-      return;
-    }
-
-    if (form.password !== confirmPassword) {
-      const message = 'Passwords do not match.';
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      const message = 'Enter a valid email address.';
       setError(message);
       setToast({ type: 'error', message });
       return;
@@ -40,12 +32,12 @@ const SignupPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/signup', form);
+      const response = await api.post('/auth/login', form);
       localStorage.setItem('token', response.data.data.token);
-      setToast({ type: 'success', message: 'Account created. Taking you to your workspace…' });
+      setToast({ type: 'success', message: 'Signed in successfully. Redirecting…' });
       window.setTimeout(() => navigate('/dashboard'), 350);
     } catch (err) {
-      const message = err.response?.data?.message || 'Signup failed. Please try again.';
+      const message = err.response?.data?.message || 'Login failed. Please try again.';
       setError(message);
       setToast({ type: 'error', message });
     } finally {
@@ -58,22 +50,22 @@ const SignupPage = () => {
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_35px_120px_rgba(15,23,42,0.10)] lg:grid-cols-[1.05fr_0.95fr]">
           <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#4F46E5] via-[#7C3AED] to-[#06B6D4] p-10 text-white lg:flex lg:flex-col lg:justify-between">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.24),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.16),_transparent_28%)]" />
-            <div className="absolute right-[-30px] top-[-24px] h-40 w-40 rounded-full border border-white/30" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.24),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(255,255,255,0.14),_transparent_28%)]" />
+            <div className="absolute right-[-32px] top-[-28px] h-40 w-40 rounded-full border border-white/30" />
             <div className="absolute bottom-[-56px] left-[-24px] h-44 w-44 rounded-full border border-white/20" />
 
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] backdrop-blur">
                 <Sparkles className="h-3.5 w-3.5" />
-                Launch faster
+                Enterprise CRM
               </div>
 
               <div className="mt-14 max-w-xl">
                 <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-                  Give your team a modern command center.
+                  Build a sharper view of every customer journey.
                 </h1>
                 <p className="mt-4 max-w-lg text-base leading-7 text-white/80">
-                  Create your account and take control of customer conversations, deal momentum, and team execution from day one.
+                  Coordinate deals, relationships, and follow-ups in one premium workspace built for modern revenue teams.
                 </p>
               </div>
 
@@ -83,8 +75,8 @@ const SignupPage = () => {
                     <Workflow className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold">Built for growth</p>
-                    <p className="text-sm text-white/70">Equip every team member with the context they need.</p>
+                    <p className="text-sm font-semibold">Automated workflows</p>
+                    <p className="text-sm text-white/70">Keep handoffs and follow-ups effortless.</p>
                   </div>
                 </div>
 
@@ -92,16 +84,16 @@ const SignupPage = () => {
                   <div className="rounded-2xl border border-white/20 bg-slate-950/10 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <Users className="h-4 w-4" />
-                      Shared views
+                      12k+ contacts
                     </div>
-                    <p className="mt-2 text-sm text-white/70">Keep sales, success, and operations aligned.</p>
+                    <p className="mt-2 text-sm text-white/70">A single source of truth for every relationship.</p>
                   </div>
                   <div className="rounded-2xl border border-white/20 bg-slate-950/10 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <BarChart3 className="h-4 w-4" />
-                      Instant insights
+                      +32% faster ops
                     </div>
-                    <p className="mt-2 text-sm text-white/70">Surface conversions and contracts with clarity.</p>
+                    <p className="mt-2 text-sm text-white/70">Live reporting designed for leadership clarity.</p>
                   </div>
                 </div>
               </div>
@@ -110,11 +102,11 @@ const SignupPage = () => {
             <div className="relative z-10 flex flex-wrap gap-3 text-sm text-white/80">
               <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2">
                 <ShieldCheck className="h-4 w-4" />
-                Zero-friction onboarding
+                SOC 2 ready
               </div>
               <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2">
                 <CheckCircle2 className="h-4 w-4" />
-                Trusted by modern teams
+                Enterprise support
               </div>
             </div>
           </div>
@@ -124,13 +116,13 @@ const SignupPage = () => {
               <div className="mb-8">
                 <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-600">
                   <Sparkles className="h-3.5 w-3.5 text-[#4F46E5]" />
-                  Start free
+                  Secure access
                 </div>
                 <h2 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[32px]">
-                  Create your account
+                  Welcome back
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Open your workspace and start shaping customer experiences with a refined operating system.
+                  Sign in to continue orchestrating customer relationships with clarity and speed.
                 </p>
               </div>
 
@@ -141,25 +133,8 @@ const SignupPage = () => {
               ) : null}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className={`group relative ${form.name ? 'filled' : ''}`}>
-                  <label htmlFor="name" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5] group-[.filled]:top-2.5 group-[.filled]:-translate-y-0 group-[.filled]:text-xs group-[.filled]:text-slate-500">
-                    Full name
-                  </label>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 transition-all duration-300 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#4F46E5]/10">
-                    <UserRound className="h-4 w-4 text-slate-400" />
-                    <input
-                      id="name"
-                      type="text"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full bg-transparent pt-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                      placeholder=""
-                    />
-                  </div>
-                </div>
-
-                <div className={`group relative ${form.email ? 'filled' : ''}`}>
-                  <label htmlFor="email" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5] group-[.filled]:top-2.5 group-[.filled]:-translate-y-0 group-[.filled]:text-xs group-[.filled]:text-slate-500">
+                <div className="group relative">
+                  <label htmlFor="email" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5]">
                     Email address
                   </label>
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 transition-all duration-300 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#4F46E5]/10">
@@ -176,8 +151,8 @@ const SignupPage = () => {
                   </div>
                 </div>
 
-                <div className={`group relative ${form.password ? 'filled' : ''}`}>
-                  <label htmlFor="password" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5] group-[.filled]:top-2.5 group-[.filled]:-translate-y-0 group-[.filled]:text-xs group-[.filled]:text-slate-500">
+                <div className="group relative">
+                  <label htmlFor="password" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5]">
                     Password
                   </label>
                   <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 transition-all duration-300 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#4F46E5]/10">
@@ -189,7 +164,7 @@ const SignupPage = () => {
                       onChange={(e) => setForm({ ...form, password: e.target.value })}
                       className="w-full bg-transparent pt-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
                       placeholder=""
-                      autoComplete="new-password"
+                      autoComplete="current-password"
                     />
                     <button
                       type="button"
@@ -201,25 +176,17 @@ const SignupPage = () => {
                   </div>
                 </div>
 
-                <div className={`group relative ${confirmPassword ? 'filled' : ''}`}>
-                  <label htmlFor="confirmPassword" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition-all duration-300 group-focus-within:top-2.5 group-focus-within:-translate-y-0 group-focus-within:text-xs group-focus-within:text-[#4F46E5] group-[.filled]:top-2.5 group-[.filled]:-translate-y-0 group-[.filled]:text-xs group-[.filled]:text-slate-500">
-                    Confirm password
-                  </label>
-                  <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 transition-all duration-300 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#4F46E5]/10">
-                    <Lock className="h-4 w-4 text-slate-400" />
-                    <input
-                      id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-transparent pt-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                      placeholder=""
-                      autoComplete="new-password"
-                    />
-                  </div>
-                </div>
-
                 {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+
+                <div className="flex items-center justify-between text-sm">
+                  <label className="flex items-center gap-2 text-slate-500">
+                    <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#4F46E5] focus:ring-[#4F46E5]" />
+                    Remember me
+                  </label>
+                  <a href="#" className="font-medium text-[#4F46E5] transition hover:text-[#4338CA]">
+                    Forgot password?
+                  </a>
+                </div>
 
                 <button
                   type="submit"
@@ -231,7 +198,7 @@ const SignupPage = () => {
                   ) : (
                     <ArrowRight className="h-4 w-4" />
                   )}
-                  {isLoading ? 'Creating account…' : 'Create account'}
+                  {isLoading ? 'Signing in…' : 'Sign in'}
                 </button>
               </form>
 
@@ -242,9 +209,9 @@ const SignupPage = () => {
               </div>
 
               <p className="text-center text-sm text-slate-600">
-                Already have an account?{' '}
-                <Link to="/login" className="font-semibold text-[#4F46E5] transition hover:text-[#4338CA]">
-                  Sign in
+                New to the platform?{' '}
+                <Link to="/signup" className="font-semibold text-[#4F46E5] transition hover:text-[#4338CA]">
+                  Create an account
                 </Link>
               </p>
             </div>
@@ -255,4 +222,4 @@ const SignupPage = () => {
   );
 };
 
-export default SignupPage;
+export default LoginPage;
