@@ -1,19 +1,26 @@
 const Contact = require('../models/Contact');
+const { createAuditLog } = require('../utils/logger'); // Injected for Admin tracking requirements
 
+// @desc    Get all contacts for the logged-in user
+// @route   GET /api/contacts
+// @access  Protected
 exports.getContacts = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const search = req.query.search || '';
 
-    const query = {
-      user: req.user._id,
-      $or: [
+    // 1. Establish base isolation scope: Admins see all, regular users see only their own
+    let query = req.user.role === 'Admin' ? {} : { user: req.user._id };
+
+    // 2. ONLY inject the $or condition array if the user actually typed a search string
+    if (search.trim() !== '') {
+      query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { company: { $regex: search, $options: 'i' } },
-      ],
-    };
+      ];
+    }
 
     const total = await Contact.countDocuments(query);
     const contacts = await Contact.find(query)
@@ -39,9 +46,19 @@ exports.getContacts = async (req, res) => {
   }
 };
 
+// @desc    Create a new contact
+// @route   POST /api/contacts
+// @access  Protected
 exports.createContact = async (req, res) => {
   try {
     const contact = await Contact.create({ ...req.body, user: req.user._id });
+
+    // TRIGGER AUDIT LOG
+    await createAuditLog(
+      req.user.email,
+      'ADD_CONTACT',
+      `Added contact "${contact.name}" (${contact.company || 'No Company'})`
+    );
 
     res.status(201).json({
       success: true,
@@ -53,16 +70,36 @@ exports.createContact = async (req, res) => {
   }
 };
 
+// @desc    Update an existing contact
+// @route   PUT /api/contacts/:id
+// @access  Protected
 exports.updateContact = async (req, res) => {
   try {
-    const contact = await Contact.findOne({ _id: req.params.id, user: req.user._id });
+    // Admins can search and update any record globally, standard users remain scoped to their own
+    const lookupQuery = req.user.role === 'Admin' 
+      ? { _id: req.params.id } 
+      : { _id: req.params.id, user: req.user._id };
+
+    const contact = await Contact.findOne(lookupQuery);
 
     if (!contact) {
       return res.status(404).json({ success: false, message: 'Contact not found' });
     }
 
+    const oldStatus = contact.status;
+    const newStatus = req.body.status || oldStatus;
+
     Object.assign(contact, req.body);
     await contact.save();
+
+    // Construct custom text payload explaining the change
+    let updateDetails = `Updated contact profile details for "${contact.name}"`;
+    if (oldStatus !== newStatus) {
+      updateDetails += ` (Pipeline status transitioned from '${oldStatus}' to '${newStatus}')`;
+    }
+
+    // TRIGGER AUDIT LOG
+    await createAuditLog(req.user.email, 'EDIT_CONTACT', updateDetails);
 
     res.json({
       success: true,
@@ -74,13 +111,28 @@ exports.updateContact = async (req, res) => {
   }
 };
 
+// @desc    Remove a contact record
+// @route   DELETE /api/contacts/:id
+// @access  Protected
 exports.deleteContact = async (req, res) => {
   try {
-    const contact = await Contact.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    // Admins can target any record globally, standard users remain scoped to their own
+    const lookupQuery = req.user.role === 'Admin' 
+      ? { _id: req.params.id } 
+      : { _id: req.params.id, user: req.user._id };
+
+    const contact = await Contact.findOneAndDelete(lookupQuery);
 
     if (!contact) {
       return res.status(404).json({ success: false, message: 'Contact not found' });
     }
+
+    // TRIGGER AUDIT LOG
+    await createAuditLog(
+      req.user.email,
+      'DELETE_CONTACT',
+      `Permanently deleted contact "${contact.name}" from company reference "${contact.company || 'N/A'}"`
+    );
 
     res.json({
       success: true,

@@ -22,16 +22,33 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
     },
+    // ADDED: Role field supporting safe RBAC enforcement
+    role: {
+      type: String,
+      enum: {
+        values: ['User', 'Admin'],
+        message: '{VALUE} is not a supported account role'
+      },
+      default: 'User',
+      // ADDED: If an older user document lacks a role field, automatically return 'User'
+      set: function(v) {
+        return v || 'User';
+      }
+    },
   },
   { timestamps: true }
 );
 
-userSchema.pre('save', async function () {
+// Fixed structural bug by adding 'next' to arguments context
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  } catch (error) {
+    next(error);
+  }
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
