@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Users, ShieldAlert, LogOut, LucideIcon } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
+import { Users, ShieldAlert, LogOut, ClipboardList, Menu, X, LucideIcon } from 'lucide-react';
 
 // 1. Define strict type contracts for navigation schema and component props
 interface NavItem {
@@ -14,14 +15,34 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-// Only keeping the required Contacts link in navigation
-const navItems: NavItem[] = [
-  { label: 'Contacts Pipeline', path: '/contacts', icon: Users },
-];
+interface DecodedToken {
+  role?: string;
+}
+
+const getRole = (): string | null => {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    return jwtDecode<DecodedToken>(token).role || null;
+  } catch {
+    return null;
+  }
+};
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const role = getRole();
+
+  // Contacts Pipeline is available to everyone; Activity Logs is Admin-only
+  const navItems: NavItem[] = [
+    { label: 'Contacts Pipeline', path: '/contacts', icon: Users },
+    ...(role === 'Admin'
+      ? [{ label: 'Activity Logs', path: '/logs', icon: ClipboardList }]
+      : []),
+  ];
 
   const handleLogout = (): void => {
     localStorage.removeItem('token');
@@ -30,10 +51,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigate('/login');
   };
 
+  const handleMobileNavClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-100 antialiased">
-      
-      {/* Sidebar Navigation */}
+
+      {/* Sidebar Navigation (desktop only) */}
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-72 border-r border-slate-800 bg-slate-900 p-6 lg:flex lg:flex-col lg:justify-between">
         <div>
           <div className="mb-10 flex items-center gap-3">
@@ -55,8 +80,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   key={item.path}
                   to={item.path}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                    active 
-                      ? 'bg-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/10' 
+                    active
+                      ? 'bg-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/10'
                       : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
                   }`}
                 >
@@ -84,17 +109,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="lg:ml-72">
         <header className="border-b border-slate-800 bg-slate-900/50 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">System Route</p>
-              <p className="mt-0.5 text-xs text-slate-400">Protected Account Active</p>
+            <div className="flex items-center gap-3">
+              {/* Hamburger button — mobile/tablet only */}
+              <button
+                onClick={() => setIsMobileMenuOpen((open) => !open)}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/50 p-2 text-slate-400 transition hover:border-slate-700 hover:text-white lg:hidden"
+                aria-label="Toggle navigation menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">System Route</p>
+                <p className="mt-0.5 text-xs text-slate-400">Protected Account Active</p>
+              </div>
             </div>
+
             <div className="flex items-center gap-4">
               <div className="hidden rounded-full border border-slate-800 bg-slate-950 px-3.5 py-1.5 text-xs font-medium text-slate-400 sm:block">
                 Authenticated Session
               </div>
               {/* Responsive Header Logout Button */}
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 px-3.5 py-1.5 text-xs font-semibold text-slate-400 transition hover:border-slate-700 hover:text-white active:scale-[0.98]"
               >
                 <LogOut className="h-3.5 w-3.5 text-slate-400 group-hover:text-white" />
@@ -102,8 +140,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
             </div>
           </div>
+
+          {/* Mobile nav drawer — only rendered on small screens when toggled open */}
+          {isMobileMenuOpen && (
+            <nav className="mt-4 space-y-1.5 border-t border-slate-800/60 pt-4 lg:hidden">
+              {navItems.map((item) => {
+                const active = location.pathname === item.path;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={handleMobileNavClick}
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-cyan-500 text-slate-950 font-semibold shadow-lg shadow-cyan-500/10'
+                        : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
         </header>
-        
+
         <main>{children}</main>
       </div>
     </div>

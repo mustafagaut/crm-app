@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// UPDATED: Now includes role in token payload so frontend & backend middleware can read it
 const generateToken = (userId, role) => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
     expiresIn: '15m',
@@ -91,7 +90,7 @@ exports.login = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Login failed', errors: [error.message] });
   }
-};
+};``
 
 // @desc    Exchange a valid refresh token for a new short-lived access token
 // @route   POST /api/auth/refresh

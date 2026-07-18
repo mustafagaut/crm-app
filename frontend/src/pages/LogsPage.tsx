@@ -18,7 +18,7 @@ const LogsPage: React.FC = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await api.get('/logs');
+        const response = await api.get('/admin/logs');
         if (response.data.success) {
           setLogs(response.data.data);
         }
