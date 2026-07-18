@@ -24,23 +24,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
   try {
     const decoded = jwtDecode<DecodedToken>(token);
-    
-    // 2. Check token expiration safety guard
-    if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem('token');
-      return <Navigate to="/login" replace />;
-    }
 
-    // 3. RBAC Check: If specific roles are required, validate the token payload[cite: 2]
+    // Note: we deliberately don't force a redirect here just because the
+    // access token's `exp` has passed. The token is short-lived (15 min) by
+    // design, and the axios response interceptor in services/api.ts will
+    // transparently use the refresh token to get a new one on the next API
+    // call. Bouncing to /login here would defeat the point of having a
+    // refresh token at all. If the refresh token has also expired, the
+    // interceptor itself clears storage and redirects.
+
+    // RBAC Check: If specific roles are required, validate the token payload
     if (allowedRoles && !allowedRoles.includes(decoded.role)) {
       // Bounce normal users away from Admin spaces back to the main dashboard safely
       return <Navigate to="/contacts" replace />;
     }
-    
+
     return <>{children}</>;
   } catch (error) {
     // If token parsing breaks down or is corrupted, clear it out safely
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     return <Navigate to="/login" replace />;
   }
 };

@@ -1,10 +1,10 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { signup, login } = require('../controllers/authController');
-
+const { signup, login, refreshAccessToken } = require('../controllers/authController');
+ 
 const router = express.Router();
-
+ 
 // Login rate limit: 3 attempts per 10 minutes, per IP
 const loginLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
@@ -16,7 +16,7 @@ const loginLimiter = rateLimit({
     message: 'Too many login attempts. Please try again after 10 minutes.',
   },
 });
-
+ 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -24,7 +24,7 @@ const validate = (req, res, next) => {
   }
   next();
 };
-
+ 
 router.post(
   '/signup',
   [
@@ -35,7 +35,7 @@ router.post(
   validate,
   signup
 );
-
+ 
 router.post(
   '/login',
   loginLimiter,
@@ -46,5 +46,7 @@ router.post(
   validate,
   login
 );
-
+ 
+router.post('/refresh', refreshAccessToken);
+ 
 module.exports = router;

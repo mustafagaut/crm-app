@@ -20,6 +20,7 @@ interface FormErrors {
 interface SignupResponse {
   data?: {
     token: string;
+    refreshToken?: string;
   };
 }
 
@@ -70,9 +71,13 @@ const SignupPage: React.FC = () => {
     try {
       const response = await api.post<SignupResponse>('/auth/signup', form);
       const token = response.data?.data?.token;
+      const refreshToken = response.data?.data?.refreshToken;
 
       if (token) {
         localStorage.setItem('token', token);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
         navigate('/contacts');
       } else {
         throw new Error('No authentication token received.');

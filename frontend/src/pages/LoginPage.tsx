@@ -17,6 +17,7 @@ interface FormErrors {
 interface LoginResponse {
   data?: {
     token: string;
+    refreshToken?: string;
   };
 }
 
@@ -54,9 +55,13 @@ const LoginPage: React.FC = () => {
       // Typed network payload mapping
       const response = await api.post<LoginResponse>('/auth/login', form);
       const token = response.data?.data?.token;
-      
+      const refreshToken = response.data?.data?.refreshToken;
+
       if (token) {
         localStorage.setItem('token', token);
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
         navigate('/contacts');
       } else {
         throw new Error('No authentication token received.');

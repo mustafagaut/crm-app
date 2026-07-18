@@ -25,6 +25,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleLogout = (): void => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     toast.info('Logged out safely');
     navigate('/login');
   };

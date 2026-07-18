@@ -92,3 +92,44 @@ exports.login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Login failed', errors: [error.message] });
   }
 };
+
+// @desc    Exchange a valid refresh token for a new short-lived access token
+// @route   POST /api/auth/refresh
+// @access  Public (requires a valid refreshToken in the body)
+exports.refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: 'Refresh token is required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ success: false, message: 'Refresh token is invalid or expired' });
+    }
+
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User no longer exists' });
+    }
+
+    // Re-issue both tokens (sliding refresh window) using the user's *current*
+    // role, so a role change since the last login is picked up immediately.
+    const newToken = generateToken(user._id, user.role);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        token: newToken,
+        refreshToken: newRefreshToken,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Token refresh failed', errors: [error.message] });
+  }
+};
