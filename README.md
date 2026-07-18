@@ -2,9 +2,6 @@
 
 A modern MERN stack CRM application for managing customer contacts, with role-based authentication (User/Admin), protected routes, an admin activity-log audit trail, and a clean dashboard experience.
 
-## Assessment Note
-
-This CRM application was built as a submission for a MERN Stack Technical Assessment. It demonstrates a complete, production-style full-stack workflow — role-based authentication, protected routes, CRUD operations, an audit log system, and a deployed live demo — within the scope of the assessment brief (see `MERN Stack Tech Assessment.pdf` in this repo for the original requirements).
 
 ## Overview
 
@@ -56,6 +53,11 @@ The application is structured to be easy to explain in an interview and simple t
 - cors
 - helmet
 - morgan
+
+### DevOps
+- Docker (multi-stage builds for both frontend and backend)
+- Docker Compose (local orchestration: frontend + backend + MongoDB)
+- Nginx (serves the built frontend static files in its container)
 
 ## Architecture
 
@@ -170,6 +172,31 @@ npm run dev
 Vite will print a local URL, typically `http://localhost:5173` — open it in a browser to use the app.
 
 The API base URL is read from `VITE_API_URL` in `frontend/src/services/api.ts` (falling back to `http://localhost:5000/api` if unset), so the frontend automatically targets whichever backend URL is configured in its `.env`.
+
+### Alternative: run everything with Docker
+
+Instead of steps 2 and 3 above, the whole stack (frontend, backend, and a local MongoDB) can be started with a single command using Docker Compose. No local Node.js install, no manual `.env` setup for the database.
+
+Prerequisite: [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+```bash
+docker compose up --build
+```
+
+This builds and starts three containers:
+- `crm-mongo` — MongoDB 7, on port `27017`
+- `crm-backend` — the Express API, on port `5000`
+- `crm-frontend` — the built React app served via Nginx, on port `5173`
+
+Once it's up:
+- Frontend: `http://localhost:5173`
+- Backend health check: `http://localhost:5000/health`
+
+Notes:
+- The bundled Mongo container starts empty — it's a separate local database, not your Atlas cluster, so you'll need to sign up a fresh user the first time.
+- Backend secrets (`JWT_SECRET`, `JWT_REFRESH_SECRET`, `ADMIN_SECRET_KEY`) are still read from `backend/.env` (`docker-compose.yml` uses `env_file` for these) — `PORT`, `MONGO_URI`, and `CLIENT_URL` are overridden automatically to the correct Docker-network values regardless of what's in `.env`.
+- To stop everything: `Ctrl+C`, then `docker compose down` (add `-v` to also delete the Mongo data volume and start fresh next time).
+- To rebuild after a code change: `docker compose up --build` again.
 
 ## Environment Variables
 
