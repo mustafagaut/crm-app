@@ -2,6 +2,9 @@
 
 A modern MERN stack CRM application for managing customer contacts, with role-based authentication (User/Admin), protected routes, an admin activity-log audit trail, and a clean dashboard experience.
 
+## Assessment Note
+
+This CRM application was built as a submission for a MERN Stack Technical Assessment. It demonstrates a complete, production-style full-stack workflow — role-based authentication, protected routes, CRUD operations, an audit log system, and a deployed live demo — within the scope of the assessment brief (see `MERN Stack Tech Assessment.pdf` in this repo for the original requirements).
 
 ## Overview
 
@@ -230,4 +233,9 @@ POST /api/auth/signup
 ```
 
 If `adminSecretKey` is missing or doesn't match the server's `ADMIN_SECRET_KEY`, the request is rejected with a 403 and no Admin account is created. Regular signups through the UI always default to the `User` role.
+
+### Demo Admin account (for review)
+
+- **Email:** `admin@test.com`
+- **Password:** `password@123`
 

@@ -1,0 +1,46 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: crm-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+    container_name: crm-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - ./backend/.env
+    environment:
+      # These three are forced to Docker-network-correct values regardless
+      # of whatever is in backend/.env, so `docker compose up` works out of
+      # the box against the bundled Mongo container.
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/crm-app
+      CLIENT_URL: http://localhost:5173
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked in at build time. Must be http://localhost:5000/api (not
+        # http://backend:5000/api) because this URL is called from the
+        # user's browser, not from inside the Docker network.
+        VITE_API_URL: http://localhost:5000/api
+    container_name: crm-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  mongo-data:
