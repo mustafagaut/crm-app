@@ -14,6 +14,13 @@ This project demonstrates a production-style full-stack architecture with:
 
 The application is structured to be easy to explain in an interview and simple to extend with future features such as CSV export and analytics.
 
+
+## API Overview
+...
+
+**Postman Collection:** [`CRM-App.postman_collection.json`](./CRM-App.postman_collection.json) — import into Postman and run "Login (User)" first to auto-populate the auth token for the rest of the requests.
+
+
 ## Core Features
 
 - User signup and login, with an optional Admin role gated behind a server-side secret key
